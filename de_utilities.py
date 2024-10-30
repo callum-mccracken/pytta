@@ -22,7 +22,7 @@ def prepare_data(time: np.ndarray, intensity: np.ndarray, t_cut: float) -> tuple
     intensity = intensity-average
     time = time*1e6
 
-    indices_to_keep = 0 < time < t_cut
+    indices_to_keep = (0 < time) & (time < t_cut)
 
     return time[indices_to_keep], intensity[indices_to_keep]
 
