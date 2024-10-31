@@ -102,7 +102,7 @@ if mode == "Parameter Estimation":
         with col2_input_data:
             fig = plt.figure(figsize=(5,5))
             ax = fig.gca()
-            ax.plot(times, intensities)
+            ax.plot(times, intensities, color="#ff4b4b")
             if multiply_t:
                 ax.set_xlabel(f"Time (scaled by {time_multiplier})")
             else:
