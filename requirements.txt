@@ -1,8 +1,6 @@
 streamlit
 pandas
 numpy
-streamlit_theme
 matplotlib
-cycler
 seaborn
 scipy
