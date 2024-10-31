@@ -4,11 +4,9 @@ Currently doesn't do much, but should:
 - display a curve given input parameters
 - find best-fit parameters given input curve (file upload)
 """
-from cycler import cycler
 import pandas as pd
 import numpy as np
 import streamlit as st
-from streamlit_theme import st_theme
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
@@ -16,23 +14,19 @@ from fitting import find_best_fit_params
 from de_utilities import triplet_decay_solution
 
 # make it prettyyy
-theme = st_theme()
-if theme is not None:
-    mpl.rcParams['axes.prop_cycle'] = cycler(color=[
-        theme["primaryColor"], 'g', 'b', 'y'])
-    mpl.rc('lines', linewidth=1, linestyle='-')
-    sns.set_style("darkgrid", {
-                "figure.facecolor": theme["backgroundColor"],
-                "axes.facecolor": theme["secondaryBackgroundColor"],
-                "axes.edgecolor": theme["textColor"],
-                "axes.labelcolor": theme["textColor"],
-                "grid.color": theme["textColor"],
-                "grid.linestyle": ":",
-                "xtick.color": theme["textColor"],
-                "ytick.color": theme["textColor"],
-                "text.color": theme["textColor"],
-                "font": theme["font"]
-                })
+mpl.rc('lines', linewidth=1, linestyle='-')
+sns.set_style("darkgrid", {
+            "figure.facecolor": "#0e1117",
+            "axes.facecolor": "#262730",
+            "axes.edgecolor": "#fafafa",
+            "axes.labelcolor": "#fafafa",
+            "grid.color": "#fafafa",
+            "grid.linestyle": ":",
+            "xtick.color": "#fafafa",
+            "ytick.color": "#fafafa",
+            "text.color": "#fafafa",
+            "font": "\"Source Sans Pro\", sans-serif"
+            })
 
 # header
 st.title("Triplet-Triplet Annihilation")
@@ -134,7 +128,7 @@ if mode == "Parameter Estimation":
         st.write("#### Did it work? Best-fit parameter curve:")
         fig = plt.figure(figsize=(5,5))
         ax = fig.gca()
-        ax.plot(times, best_fit_intensities)
+        ax.plot(times, best_fit_intensities, color="#ff4b4b")
         ax.set_xlabel("Time")
         ax.set_ylabel("Intensity")
         fig.tight_layout()
@@ -157,7 +151,7 @@ else:
 
         fig = plt.figure(figsize=(5,5))
         ax = fig.gca()
-        ax.plot(times, intensities)
+        ax.plot(times, intensities, color="#ff4b4b")
         ax.set_xlabel("Time")
         ax.set_ylabel("Intensity")
         fig.tight_layout()
