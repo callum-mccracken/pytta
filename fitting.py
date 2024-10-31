@@ -12,10 +12,6 @@ def find_best_fit_params(times: np.ndarray, intensities: np.ndarray) -> tuple[fl
     We don't really have an independent variable so uhhhhh?
     There's probably a better function to use, this is just a first attempt.
     """
-    def scipy_format(x, k_2_conc_a, k_3, k_4, k_ph):
-        time = x[:, 0]
-        intensity = x[:, 1]
-        return equation_to_fit(k_2_conc_a, k_ph, k_3, k_4, time, intensity)
 
     def fitfunc(time, k_2_conc_a, k_3, k_4, k_ph):
         'Function that returns Ca computed from an ODE for a k'
