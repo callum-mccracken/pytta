@@ -1,0 +1,12 @@
+stages:
+  - docker
+
+build_image:
+  stage: docker
+  tags:
+    - docker-image-build
+  before_script:
+    - docker info
+  script:
+    - docker build -t gitlab-registry.cern.ch/camccrac/pytta .
+    - docker push gitlab-registry.cern.ch/camccrac/pytta

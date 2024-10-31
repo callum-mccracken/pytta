@@ -20,7 +20,7 @@ def find_best_fit_params(times: np.ndarray, intensities: np.ndarray) -> tuple[fl
 
         intensity_0 = intensities[0]
         solution = odeint(myode, intensity_0, time)
-        return solution[:,0]
+        return solution[:, 0]
 
     # TODO: how to make smart initial guesses?
     # Currently very dependent on initial guess
