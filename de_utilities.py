@@ -4,7 +4,6 @@ Collection of utility functions for DE-related things like:
 - actually solving the DE (with RK)
 """
 
-import statistics
 from typing import Callable
 import numpy as np
 from scipy.signal import savgol_filter
@@ -18,7 +17,7 @@ def prepare_data(time: np.ndarray, intensity: np.ndarray, t_cut: float) -> tuple
 
     Return time, intensity (two arrays, after preparation steps).
     """
-    average = statistics.mean(intensity[:20])
+    average = np.mean(intensity[:20])
     intensity = intensity-average
     time = time*1e6
 
@@ -76,21 +75,3 @@ def triplet_decay_solution(times: np.ndarray,
 
     return epsilon*k_4*(
         runge_kutta(equation_to_fit, k_2_conc_a,k_ph,k_3,k_4,time_0,intensity_0,times))**2
-
-#Inputs = np.array([0.0062,2.2950,4.6428,10])*1e-2
-##x = np.linspace(0,250,1000)
-##test = (RungeKutta(Equation,Inputs,0,0,x))
-
-
-#time,data = readfile(r'H:\user\v\vbjellan\Documents\SEL_Folder\Kode\Kode\DPA_10uM_Ptx535m435_g10us_d550.csv')
-#time,data = PrepareData(time,data,250)
-#data = SmoothData(data)
-
-#popt, pcov = curve_fit(TripletDecaySolution,time,data, Inputs)
-#print(popt)
-#plt.plot(time,data)
-
-#plt.plot(time,TripletDecaySolution(time,popt[0],popt[1],popt[2],popt[3]))
-#plt.plot(time,TripletDecaySolution(time,Inputs[0],Inputs[1],Inputs[2],Inputs[3]))
-#plt.show()
-
