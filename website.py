@@ -35,7 +35,30 @@ sns.set_style("darkgrid", {
 st.title("Triplet-Triplet Annihilation")
 st.write("(Looks best in light mode)")
 
-st.write("Bla bla bla this is a description of what the website does.")
+explain = st.checkbox("Show explanation text")
+if explain:
+    st.write(
+        """
+        This code has two modes:
+
+        ##### Parameter Estimation
+
+        Numerically solves the non-approximative equations for triplet-triplet-annihilation
+        in solutions. Gives the four parameters behind the kinetic process
+        ($k_2 \\cdot [A]$, $k_{ph}$, $k_3$, $k_4$)
+        by fitting against data input by the user.
+
+        The input we expect is CSV format, with time and intensity columns, no headers.
+
+        Both the time and intensity can be scaled before attempting to find the parameters.
+        The code also expects I(t=0) = 0, so you should set $t_{min}$=0 and $t_{max}$ as appropriate
+        ($t_{max}$ should be the end of the "bump").
+
+        ##### Curve Plotter
+
+        Given $k_2 \\cdot [A]$, $k_{ph}$, $k_3$, $k_4$, plots the non-analytical equation.
+
+        """)
 
 # toggle for different modes
 mode = st.radio("Mode:",
