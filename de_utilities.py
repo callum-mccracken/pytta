@@ -71,7 +71,7 @@ def triplet_decay_solution(times: np.ndarray,
     """Solve for the solution to the triplet decay, using RK."""
     time_0 = 0
     intensity_0 = 0
-    epsilon = 1000
+    epsilon = 10
 
     return epsilon*k_4*(
         runge_kutta(equation_to_fit, k_2_conc_a,k_ph,k_3,k_4,time_0,intensity_0,times))**2

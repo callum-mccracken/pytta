@@ -11,25 +11,30 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 from fitting import find_best_fit_params
-from de_utilities import triplet_decay_solution
+from de_utilities import triplet_decay_solution, smooth_intensity
+
+DATA_COLOR = "#086788"  # blue
+FIT_COLOR = "#FF4B4B"  # red
 
 # make it prettyyy
-mpl.rc('lines', linewidth=1, linestyle='-')
+mpl.rc('lines', linewidth=2, linestyle='-')
 sns.set_style("darkgrid", {
-            "figure.facecolor": "#0e1117",
-            "axes.facecolor": "#262730",
-            "axes.edgecolor": "#fafafa",
-            "axes.labelcolor": "#fafafa",
-            "grid.color": "#fafafa",
+            "figure.facecolor": "white",
+            "axes.facecolor": "white",
+            "axes.edgecolor": "black",
+            "axes.labelcolor": "black",
+            "grid.color": "black",
             "grid.linestyle": ":",
-            "xtick.color": "#fafafa",
-            "ytick.color": "#fafafa",
-            "text.color": "#fafafa",
+            "xtick.color": "black",
+            "ytick.color": "black",
+            "text.color": "black",
             "font": "\"Source Sans Pro\", sans-serif"
             })
 
 # header
 st.title("Triplet-Triplet Annihilation")
+st.write("(Looks best in light mode)")
+
 st.write("Bla bla bla this is a description of what the website does.")
 
 # toggle for different modes
@@ -56,6 +61,10 @@ if mode == "Parameter Estimation":
         translate_i = st.checkbox("Center intensity values (set average of first 20 values = 0)")
         if translate_i:
             intensities -= np.mean(intensities[:20])
+
+        do_smoothing = st.checkbox("Smooth data savgol(window_length=30, poly_filter=3)")
+        if do_smoothing:
+            intensities = smooth_intensity(intensities)
 
 
         # scale & translate axes if desired
@@ -102,7 +111,7 @@ if mode == "Parameter Estimation":
         with col2_input_data:
             fig = plt.figure(figsize=(5,5))
             ax = fig.gca()
-            ax.plot(times, intensities, color="#ff4b4b")
+            ax.plot(times, intensities, color=DATA_COLOR)
             if multiply_t:
                 ax.set_xlabel(f"Time (scaled by {time_multiplier})")
             else:
@@ -115,24 +124,32 @@ if mode == "Parameter Estimation":
             fig.tight_layout()
             st.pyplot(fig=fig)
 
-        k_2_conc_a, k_3, k_4, k_ph = find_best_fit_params(times, intensities)
+        begin = st.checkbox("Begin calculation")
 
-        st.write("## Best-Fit Parameters")
-        st.text(f"k_2[A]: {k_2_conc_a}")
-        st.text(f"k_3:    {k_3}")
-        st.text(f"k_4:    {k_4}")
-        st.text(f"k_ph:   {k_ph}")
+        if begin:
+            st.write("Calculating!")
+            k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
+                times, intensities,
+                initial_guesses=[1, 1, 1, 1])
 
-        best_fit_intensities = triplet_decay_solution(times, k_2_conc_a, k_ph, k_3, k_4)
+            st.write("## Best-Fit Parameters")
+            st.text(f"k_2[A]: {k_2_conc_a}")
+            st.text(f"k_ph:   {k_ph}")
+            st.text(f"k_3:    {k_3}")
+            st.text(f"k_4:    {k_4}")
 
-        st.write("#### Did it work? Best-fit parameter curve:")
-        fig = plt.figure(figsize=(5,5))
-        ax = fig.gca()
-        ax.plot(times, best_fit_intensities, color="#ff4b4b")
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Intensity")
-        fig.tight_layout()
-        st.pyplot(fig=fig)
+            best_fit_intensities = triplet_decay_solution(times, k_2_conc_a, k_ph, k_3, k_4)
+
+            st.write("#### Did it work? Best-fit parameter curve:")
+            fig = plt.figure(figsize=(5,5))
+            ax = fig.gca()
+            ax.plot(times, intensities, color=DATA_COLOR)
+            ax.plot(times, best_fit_intensities, color=FIT_COLOR)
+            ax.set_xlabel("Time")
+            ax.set_ylabel("Intensity")
+            fig.tight_layout()
+            st.pyplot(fig=fig)
+
 
 else:
     col1, col2 = st.columns([1, 3])
@@ -151,7 +168,7 @@ else:
 
         fig = plt.figure(figsize=(5,5))
         ax = fig.gca()
-        ax.plot(times, intensities, color="#ff4b4b")
+        ax.plot(times, intensities, color=FIT_COLOR)
         ax.set_xlabel("Time")
         ax.set_ylabel("Intensity")
         fig.tight_layout()
