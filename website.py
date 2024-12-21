@@ -1,8 +1,10 @@
 """
-A module to generate the website.
-Currently doesn't do much, but should:
+A script to generate the website.
 - display a curve given input parameters
 - find best-fit parameters given input curve (file upload)
+
+If you're running this yourself, make sure to download all the dependencies (in requirements.txt)
+then run `streamlit run website.py`.
 """
 import pandas as pd
 import numpy as np
