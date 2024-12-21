@@ -1,4 +1,4 @@
-# pytta
+# pytta 🥙
 
 A python solution to Triplet-Triplet Anihilation
 
