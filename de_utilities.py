@@ -52,7 +52,7 @@ def runge_kutta(diff_equation: Callable,
 
     intensity[1] = intensity[0] + k1/6 + k2/3 + k4/6
 
-    for i in range(2,len(times)-1):
+    for i in range(2,len(times)):
         k1 = time_step*diff_equation(
             k_2_conc_a,k_ph,k_3,k_4,times[i-1],intensity[i-1])
         k2 = time_step*diff_equation(
