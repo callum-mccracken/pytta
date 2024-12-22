@@ -14,7 +14,7 @@ def main():
     * k_2_conc_a = Kk_{TET}[A_S]
     * k_3 = k_3
     * k_4 = k_{TTA}
-    * intensity = [A_T]
+    * intensity = epsilon*k_{TTA}*[A_T]^2
     * time = t
 
     In the first analytically solvable case, dy/dt=a-by^2,
@@ -43,24 +43,28 @@ def main():
     # analytical values using a and b
     analytical_y = np.sqrt(a/b) * np.tanh(np.sqrt(a*b)*times)
 
+    # TODO: think about it
+    epsilon=1/5000
+
     # fit result
-    # k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
-    #     times, analytical_y,
-    #     initial_guesses=[a, 0, 0, b/2])
-    # # find fit_a and fit_b from the best-fit parameters
-    # # commented for now since it doesn't actually seem to converge
-    # fit_a = k_2_conc_a
-    # fit_b = 2 * k_4
-    # fit_y = triplet_decay_solution(times, k_2_conc_a, k_ph, k_3, k_4)
-    fit_a = a
-    fit_b = b
-    fit_y = analytical_y
+    k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
+        times, epsilon*b/2*analytical_y**2,
+        initial_guesses=[1, 1, 1, 1], epsilon=epsilon)
+    # find fit_a and fit_b from the best-fit parameters
+    # commented for now since it doesn't actually seem to converge
+    fit_a = k_2_conc_a
+    fit_b = 2 * k_4
+    fit_y = triplet_decay_solution(epsilon=epsilon)(times, k_2_conc_a, k_ph, k_3, k_4)
+    # fit_a = a
+    # fit_b = b
+    # fit_y = analytical_y
 
     # plot one curve & fit (Figure S1)
     fig = plt.figure(figsize=(5,5))
     ax = fig.gca()
     ax.plot(times, analytical_y**2, color="k", linestyle="-", label="analytical $y^2(t)$")
-    ax.plot(times, fit_y**2, color="orange", linestyle="--", label=f"fit $y^2(t)$, (a={int(fit_a)}, b={int(fit_b)})")
+    ax.plot(times, fit_y**2, color="orange", linestyle="--",
+            label=f"fit $y^2(t)$, (a={int(fit_a)}, b={int(fit_b)})")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
     ax.tick_params(direction='in', length=6, top=True, right=True)
@@ -76,19 +80,16 @@ def main():
     colors = ["purple", "orange", "red"]
     for factor, color in zip(factors, colors):
         analytical_y_factor = factor * analytical_y
-        # k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
-        #     times, analytical_y_multiple,
-        #     initial_guesses=[a, 0, 0, b/2])
+        k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
+            times, epsilon*b/2*analytical_y**2,
+            initial_guesses=[1, 1, 1, 1], epsilon=epsilon)
         # find fit_a and fit_b from the best-fit parameters
-        # commented for now since it doesn't actually seem to converge
-        # fit_a = k_2_conc_a
-        # fit_b = 2 * k_4
-        # fit_y_factor = triplet_decay_solution(times, k_2_conc_a, k_ph, k_3, k_4)
-        fit_a = a*factor
-        fit_b = b/factor
-        fit_y_factor = factor * analytical_y
+        fit_a = k_2_conc_a
+        fit_b = 2 * k_4
+        fit_y_factor = triplet_decay_solution(epsilon=epsilon)(times, k_2_conc_a, k_ph, k_3, k_4)
         ax.plot(times, analytical_y_factor**2, color="k", linestyle="-")
-        ax.plot(times, fit_y_factor**2, color=color, linestyle="--", label=f"fit $y^2(t)$, (a={round(fit_a)}, b={round(fit_b)})")
+        ax.plot(times, fit_y_factor**2, color=color, linestyle="--",
+                label=f"fit $y^2(t)$, (a={round(fit_a)}, b={round(fit_b)})")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
     ax.tick_params(direction='in', length=6, top=True, right=True)
@@ -109,7 +110,8 @@ def main():
         times, analytical_y_case2,
         initial_guesses=[k_2_conc_a, k_ph, k_3, 0])
     # commented for now since it doesn't actually seem to converge
-    fit_y_case2 = triplet_decay_solution(times, k_2_conc_a_fit, k_ph_fit, k_3_fit, k_4_fit)
+    fit_y_case2 = triplet_decay_solution(epsilon=10)(
+        times, k_2_conc_a_fit, k_ph_fit, k_3_fit, k_4_fit)
     ax.plot(times, analytical_y_case2, color="k", linestyle="-")
     ax.plot(times, fit_y_case2, color="red", marker="x", label="fit $y^2(t)$")
     ax.plot(times, np.abs(fit_y_case2 - analytical_y_case2), color="green", label="|difference|")
