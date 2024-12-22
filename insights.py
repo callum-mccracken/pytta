@@ -33,95 +33,84 @@ def main():
     # pick arbitrary values for a and b
     a = 10000
     b = 10000
-
     t_min = 0
     t_max = 0.5e-3
-
+    epsilon=1/5000  # has to be tweaked manually, but this value works for the plots here
     # get some times for the x axis
     times = np.linspace(t_min, t_max, 1000)
-
     # analytical values using a and b
     analytical_y = np.sqrt(a/b) * np.tanh(np.sqrt(a*b)*times)
-
-    # TODO: think about it
-    epsilon=1/5000
-
     # fit result
+    analytical_intensity = analytical_y**2  # well epsilon * k_4 * this but we'll normalize
     k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
-        times, epsilon*b/2*analytical_y**2,
-        initial_guesses=[1, 1, 1, 1], epsilon=epsilon)
+        times, analytical_intensity,
+        initial_guesses=[a, 0, 0, b/2], epsilon=epsilon)
     # find fit_a and fit_b from the best-fit parameters
-    # commented for now since it doesn't actually seem to converge
     fit_a = k_2_conc_a
     fit_b = 2 * k_4
-    fit_y = triplet_decay_solution(epsilon=epsilon)(times, k_2_conc_a, k_ph, k_3, k_4)
-    # fit_a = a
-    # fit_b = b
-    # fit_y = analytical_y
-
+    fit_intensity = triplet_decay_solution(epsilon=epsilon)(times, k_2_conc_a, k_ph, k_3, k_4)
     # plot one curve & fit (Figure S1)
+    # note the normalization since y is only proportional to intensity
     fig = plt.figure(figsize=(5,5))
     ax = fig.gca()
-    ax.plot(times, analytical_y**2, color="k", linestyle="-", label="analytical $y^2(t)$")
-    ax.plot(times, fit_y**2, color="orange", linestyle="--",
-            label=f"fit $y^2(t)$, (a={int(fit_a)}, b={int(fit_b)})")
+    ax.plot(times, analytical_intensity/max(analytical_intensity), color="k", linestyle="-",
+            label="analytical")
+    ax.plot(times, fit_intensity/max(fit_intensity), color="orange", linestyle="--",
+            label=f"fit, (a={int(fit_a)}, b={int(fit_b)})")
     ax.set_xlabel("Time (s)")
-    ax.set_ylabel("Amplitude")
+    ax.set_ylabel("Normalized Intensity")
     ax.tick_params(direction='in', length=6, top=True, right=True)
     plt.ticklabel_format(axis='both', style='sci', scilimits=(0,0))
-    plt.legend(loc="best")
+    ax.legend(loc="best")
     fig.tight_layout()
-    plt.show()
+    plt.savefig("images/S1.png")
+    ax.clear()
 
     # try a couple amplitude factors (Figure S2)
-    fig = plt.figure(figsize=(5,5))
-    ax = fig.gca()
     factors = [1.5, 1.0, 0.5]
     colors = ["purple", "orange", "red"]
     for factor, color in zip(factors, colors):
-        analytical_y_factor = factor * analytical_y
+        analytical_intensity_i = factor * analytical_intensity
         k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
-            times, epsilon*b/2*analytical_y**2,
-            initial_guesses=[1, 1, 1, 1], epsilon=epsilon)
+            times, analytical_intensity_i,
+            initial_guesses=[a, 0, 0, b/2], epsilon=epsilon)
         # find fit_a and fit_b from the best-fit parameters
         fit_a = k_2_conc_a
         fit_b = 2 * k_4
-        fit_y_factor = triplet_decay_solution(epsilon=epsilon)(times, k_2_conc_a, k_ph, k_3, k_4)
-        ax.plot(times, analytical_y_factor**2, color="k", linestyle="-")
-        ax.plot(times, fit_y_factor**2, color=color, linestyle="--",
-                label=f"fit $y^2(t)$, (a={round(fit_a)}, b={round(fit_b)})")
-    ax.set_xlabel("Time (s)")
-    ax.set_ylabel("Amplitude")
-    ax.tick_params(direction='in', length=6, top=True, right=True)
-    plt.ticklabel_format(axis='both', style='sci', scilimits=(0,0))
-    plt.legend(loc="best")
+        fit_intensity_i = triplet_decay_solution(epsilon=epsilon)(times, k_2_conc_a, k_ph, k_3, k_4)
+        ax.plot(times, analytical_intensity_i, color="k", linestyle="-")
+        # normalize the fits so they line up with the analytical things
+        ax.plot(times, fit_intensity_i/np.max(fit_intensity_i)*np.max(analytical_intensity_i),
+                color=color, linestyle="--",
+                label=f"fit, (a={round(fit_a)}, b={round(fit_b)})")
+    ax.legend(loc="best")
     fig.tight_layout()
-    plt.show()
+    plt.savefig("images/S2.png")
+    ax.clear()
 
-
-    # sub-case 2 where y = k_2_conc_a/(k_ph-k_3) * (e^{-k_3 t} - e^{-k_ph t})
-    fig = plt.figure(figsize=(5,5))
-    ax = fig.gca()
+    # sub-case 2 where y = k_2_conc_a/(k_ph-k_3) * (e^{-k_3 t} - e^{-k_ph t}) (Figure S3)
+    t_min = 0
+    t_max = 1e-3
+    times = np.linspace(t_min, t_max, 1000)
     k_2_conc_a = 30000
     k_ph = 10000
     k_3 = 20000
     analytical_y_case2 = k_2_conc_a/(k_ph-k_3) * (np.exp(-k_3 * times) - np.exp(-k_ph * times))
+    analytical_intensity_case2 = analytical_y_case2**2
     k_2_conc_a_fit, k_ph_fit, k_3_fit, k_4_fit = find_best_fit_params(
-        times, analytical_y_case2,
-        initial_guesses=[k_2_conc_a, k_ph, k_3, 0])
+        times, analytical_intensity_case2,  # if k_4 is zero shouldn't intensity = 0?
+        initial_guesses=[k_2_conc_a, k_ph, k_3, 1])
     # commented for now since it doesn't actually seem to converge
-    fit_y_case2 = triplet_decay_solution(epsilon=10)(
+    fit_intensity_case2 = triplet_decay_solution(epsilon=epsilon)(
         times, k_2_conc_a_fit, k_ph_fit, k_3_fit, k_4_fit)
-    ax.plot(times, analytical_y_case2, color="k", linestyle="-")
-    ax.plot(times, fit_y_case2, color="red", marker="x", label="fit $y^2(t)$")
-    ax.plot(times, np.abs(fit_y_case2 - analytical_y_case2), color="green", label="|difference|")
-    ax.set_xlabel("Time (s)")
-    ax.set_ylabel("Amplitude")
-    ax.tick_params(direction='in', length=6, top=True, right=True)
-    plt.ticklabel_format(axis='both', style='sci', scilimits=(0,0))
-    plt.legend(loc="best")
+    ax.plot(times, analytical_intensity_case2/np.max(analytical_intensity_case2),
+            color="k", linestyle="-", label="analytical")
+    ax.plot(times, fit_intensity_case2/np.max(fit_intensity_case2),
+            color="orange", linestyle="--", label="fit")
+    ax.legend(loc="best")
     fig.tight_layout()
-    plt.show()
+    plt.savefig("images/S3.png")
+    plt.close()
 
 
 
