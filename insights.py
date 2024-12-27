@@ -1,6 +1,7 @@
 """Script to show how the plots in the supplementary information were made."""
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
 from fitting import find_best_fit_params
 from de_utilities import triplet_decay_solution
 
@@ -67,7 +68,7 @@ def main():
     ax.clear()
 
     # try a couple amplitude factors (Figure S2)
-    factors = [1.5, 1.0, 0.5]
+    factors = [1.5, 1, 0.5]
     colors = ["purple", "orange", "red"]
     for factor, color in zip(factors, colors):
         analytical_intensity_i = factor * analytical_intensity
@@ -77,6 +78,7 @@ def main():
         # find fit_a and fit_b from the best-fit parameters
         fit_a = k_2_conc_a
         fit_b = 2 * k_4
+        print(fit_a * fit_b)
         fit_intensity_i = triplet_decay_solution(epsilon=epsilon)(times, k_2_conc_a, k_ph, k_3, k_4)
         ax.plot(times, analytical_intensity_i, color="k", linestyle="-")
         # normalize the fits so they line up with the analytical things
@@ -87,6 +89,30 @@ def main():
     fig.tight_layout()
     plt.savefig("images/S2.png")
     ax.clear()
+
+    # is this actually invariant?
+    # yes, seems like it was, we didn't include this plot in the paper
+    # start = 1
+    # end = 100
+    # num = 1000
+    # factors = np.linspace(start, end, num=num)
+    # products = np.zeros_like(factors)
+    # for i, factor in tqdm(enumerate(factors)):
+    #     analytical_intensity_i = factor * analytical_intensity
+    #     k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
+    #         times, analytical_intensity_i,
+    #         initial_guesses=[a, 0, 0, b/2], epsilon=epsilon)
+    #     # find fit_a and fit_b from the best-fit parameters
+    #     fit_a = k_2_conc_a
+    #     fit_b = 2 * k_4
+    #     products[i] = fit_a * fit_b
+    # ax.plot(factors, products, "k")
+    # ax.set_xlabel("factor")
+    # ax.set_ylabel("ab product")
+    # fig.tight_layout()
+    # plt.savefig(f"images/ab_products_{start}_{end}_{num}.png")
+    # ax.clear()
+
 
     # sub-case 2 where y = k_2_conc_a/(k_ph-k_3) * (e^{-k_3 t} - e^{-k_ph t}) (Figure S3)
     t_min = 0
@@ -107,6 +133,9 @@ def main():
             color="k", linestyle="-", label="analytical")
     ax.plot(times, fit_intensity_case2/np.max(fit_intensity_case2),
             color="orange", linestyle="--", label="fit")
+    ax.plot(times, np.abs(analytical_intensity_case2/np.max(analytical_intensity_case2)
+                          - fit_intensity_case2/np.max(fit_intensity_case2)),
+            color="green", linestyle="-", label="|difference|")
     ax.legend(loc="best")
     fig.tight_layout()
     plt.savefig("images/S3.png")
