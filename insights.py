@@ -28,7 +28,7 @@ def main():
     a = 10000
     b = 10000
 
-    epsilon=1/5000  # has to be tweaked manually, but this value works for the plots here
+    epsilon=1/5000  # has to be tweaked manually, but this value works here
 
     # get some times for the x axis
     t_min = 0
@@ -39,7 +39,7 @@ def main():
     analytical_y = np.sqrt(a/b) * np.tanh(np.sqrt(a*b)*times)
 
     # fit result
-    analytical_intensity = analytical_y**2  # well epsilon * k_4 * this but we'll normalize
+    analytical_intensity = analytical_y**2  # ok since we'll normalize later
     fit_params = find_best_fit_params(
         times, analytical_intensity,
         initial_guesses=[a, 0, 0, b/2], epsilon=epsilon)
@@ -83,9 +83,10 @@ def main():
         print(fit_a * fit_b)
         fit_intensity_i = triplet_decay_solution(epsilon=epsilon)(
             times, *fit_params)
+        fit_intensity_i *= max(analytical_intensity_i)/max(fit_intensity_i)
         ax.plot(times, analytical_intensity_i, color="k", linestyle="-")
         # normalize the fits so they line up with the analytical things
-        ax.plot(times, fit_intensity_i/np.max(fit_intensity_i)*np.max(analytical_intensity_i),
+        ax.plot(times, fit_intensity_i,
                 color=color, linestyle="--",
                 label=f"a={round(fit_a)}, b={round(fit_b)}")
     ax.set_xlabel("Time (s)")
@@ -119,7 +120,8 @@ def main():
     # plt.savefig(f"images/ab_products_{start}_{end}_{num}.png")
     # ax.clear()
 
-    # sub-case 2 where y = k_2_conc_a/(k_ph-k_3) * (e^{-k_3 t} - e^{-k_ph t}) (Figure S3)
+    # sub-case 2 (Figure S3):
+    # y = k_2_conc_a/(k_ph-k_3) * (e^{-k_3 t} - e^{-k_ph t})
     t_min = 0
     t_max = 1e-3
     times = np.linspace(t_min, t_max, 1000)
@@ -129,17 +131,20 @@ def main():
     analytical_y_case2 = k_2_conc_a/(k_ph-k_3) * (
         np.exp(-k_3 * times) - np.exp(-k_ph * times))
     analytical_intensity_case2 = analytical_y_case2**2
+    analytical_intensity_case2 /= max(analytical_intensity_case2)
     fit_params = find_best_fit_params(
-        times, analytical_intensity_case2,  # if k_4 is zero shouldn't intensity = 0?
+        times, analytical_intensity_case2,
         initial_guesses=[k_2_conc_a, k_ph, k_3, 1])
     fit_intensity_case2 = triplet_decay_solution(epsilon=epsilon)(
         times, *fit_params)
-    ax.plot(times, analytical_intensity_case2/np.max(analytical_intensity_case2),
+    fit_intensity_case2 /= max(fit_intensity_case2)
+    ax.plot(times,
+            analytical_intensity_case2,
             color="k", linestyle="-", label="analytical")
-    ax.plot(times, fit_intensity_case2/np.max(fit_intensity_case2),
+    ax.plot(times, fit_intensity_case2,
             color="orange", linestyle="--", label="fit")
-    ax.plot(times, np.abs(analytical_intensity_case2/np.max(analytical_intensity_case2)
-                          - fit_intensity_case2/np.max(fit_intensity_case2)),
+    ax.plot(times,
+            np.abs(analytical_intensity_case2 - fit_intensity_case2),
             color="green", linestyle="-", label="|difference|")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Normalized Intensity")
