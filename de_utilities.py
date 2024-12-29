@@ -41,39 +41,33 @@ def runge_kutta(diff_equation: Callable,
                 time_0: float, intensity_0: float,
                 times: np.ndarray) -> np.ndarray:
     """Do RK."""
-    time_step = times[1]-times[0]
+    step = times[1]-times[0]
     intensity = np.zeros(len(times))
     intensity[0] = intensity_0
+    times[0] = time_0
 
-    k1 = time_step*diff_equation(k_2_conc_a,k_ph,k_3,k_4,time_0,intensity_0)
-    k2 = time_step*diff_equation(k_2_conc_a,k_ph,k_3,k_4,time_0+1/2*time_step,intensity_0+1/2*k1)
-    k3 = time_step*diff_equation(k_2_conc_a,k_ph,k_3,k_4,time_0+1/2*time_step,intensity_0+1/2*k2)
-    k4 = time_step*diff_equation(k_2_conc_a,k_ph,k_3,k_4,time_0+time_step,intensity_0+k3)
+    params = [k_2_conc_a,k_ph,k_3,k_4]
 
-    intensity[1] = intensity[0] + k1/6 + k2/3 + k4/6
+    for i in range(len(times)-1):
+        time = times[i]
+        intens = intensity[i]
+        k1 = step*diff_equation(*params, time, intens)
+        k2 = step*diff_equation(*params, time+1/2*step, intens+1/2*k1)
+        k3 = step*diff_equation(*params, time+1/2*step, intens+1/2*k2)
+        k4 = step*diff_equation(*params, time+step, intens+k3)
 
-    for i in range(2,len(times)):
-        k1 = time_step*diff_equation(
-            k_2_conc_a,k_ph,k_3,k_4,times[i-1],intensity[i-1])
-        k2 = time_step*diff_equation(
-            k_2_conc_a,k_ph,k_3,k_4,times[i-1]+1/2*time_step,intensity[i-1]+1/2*k1)
-        k3 = time_step*diff_equation(
-            k_2_conc_a,k_ph,k_3,k_4,times[i-1]+1/2*time_step,intensity[i-1]+1/2*k2)
-        k4 = time_step*diff_equation(
-            k_2_conc_a,k_ph,k_3,k_4,times[i-1]+time_step,intensity[i-1]+k3)
-
-        intensity[i] = intensity[i-1] + k1/6 + k2/3 + k4/6
+        intensity[i+1] = intens + k1/6 + k2/3 + k4/6
 
     return intensity
 
-def triplet_decay_solution(epsilon: float,
+def triplet_decay_solution(epsilon: float=1,
                            time_0: float=0,
                            intensity_0: float=0) -> np.ndarray:
     """Solve for the solution to the triplet decay, using RK."""
     def to_return(times: np.ndarray,
-                  k_2_conc_a: float, k_ph: float, k_3: float, k_4: float):
+                  *params: list[float]):
         """Helper function so curve_fit can have a 4-parameter function."""
-        return epsilon*k_4*(
-            runge_kutta(equation_to_fit, k_2_conc_a, k_ph, k_3, k_4,
+        return epsilon*(
+            runge_kutta(equation_to_fit, *params,
                         time_0, intensity_0, times))**2
     return to_return
