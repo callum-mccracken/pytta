@@ -8,12 +8,15 @@ from typing import Callable
 import numpy as np
 from scipy.signal import savgol_filter
 
-def prepare_data(time: np.ndarray, intensity: np.ndarray, t_cut: float) -> tuple[np.ndarray]:
+
+def prepare_data(time: np.ndarray, intensity: np.ndarray,
+                 t_cut: float) -> tuple[np.ndarray]:
     """
     Prepare data for further analysis
     - translate intensity down by the mean of the first 20 entries
     - scale time up by 1e6.
-    - remove intensity values with a time value that is either negative or above t_cut
+    - remove intensity values with a time value
+      that is either negative or above t_cut
 
     Return time, intensity (two arrays, after preparation steps).
     """
@@ -25,10 +28,12 @@ def prepare_data(time: np.ndarray, intensity: np.ndarray, t_cut: float) -> tuple
 
     return time[indices_to_keep], intensity[indices_to_keep]
 
+
 def smooth_intensity(intensity: np.ndarray,
                      window_length: int=30, poly_filter: int=3) -> np.ndarray:
     """Smooth intensity values with a savgol_filter."""
     return savgol_filter(intensity, window_length, poly_filter)
+
 
 def equation_to_fit(k_2_conc_a: float, k_ph: float, k_3: float, k_4: float,
                     times: np.ndarray, intensity: np.ndarray) -> float:
@@ -59,6 +64,7 @@ def runge_kutta(diff_equation: Callable,
         intensity[i+1] = intens + k1/6 + k2/3 + k4/6
 
     return intensity
+
 
 def triplet_decay_solution(epsilon: float=1,
                            time_0: float=0,
