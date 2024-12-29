@@ -66,7 +66,7 @@ def runge_kutta(diff_equation: Callable,
 
     return intensity
 
-def triplet_decay_solution(epsilon: float=10,
+def triplet_decay_solution(epsilon,
                            time_0: float=0,
                            intensity_0: float=0) -> np.ndarray:
     """Solve for the solution to the triplet decay, using RK."""
