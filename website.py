@@ -165,7 +165,8 @@ if mode == "Parameter Estimation":
             st.text(f"k_3:    {k_3}")
             st.text(f"k_4:    {k_4}")
 
-            best_fit_intensities = triplet_decay_solution(epsilon)(
+            #best_fit_intensities = triplet_decay_solution((epsilon)
+            best_fit_intensities = triplet_decay_solution(
                 times, k_2_conc_a, k_ph, k_3, k_4)
 
             # normalize fit to data
@@ -204,7 +205,8 @@ else:
 
     with col2:
         times = np.linspace(t_min, t_max, 1000)
-        intensities = triplet_decay_solution(epsilon)(
+        #intensities = triplet_decay_solution(epsilon)(
+        intensities = triplet_decay_solution(
             times, k_2_conc_a, k_ph, k_3, k_4)
 
         fig = plt.figure(figsize=(5,5))
