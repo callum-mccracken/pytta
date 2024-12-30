@@ -15,8 +15,8 @@ def prepare_data(time: np.ndarray, intensity: np.ndarray,
     Prepare data for further analysis
     - translate intensity down by the mean of the first 20 entries
     - scale time up by 1e6.
-    - remove intensity values with a time value
-      that is either negative or above t_cut
+    - remove intensity values with a time value that is either negative
+      or above t_cut
 
     Return time, intensity (two arrays, after preparation steps).
     """
@@ -28,52 +28,126 @@ def prepare_data(time: np.ndarray, intensity: np.ndarray,
 
     return time[indices_to_keep], intensity[indices_to_keep]
 
-
 def smooth_intensity(intensity: np.ndarray,
                      window_length: int=30, poly_filter: int=3) -> np.ndarray:
     """Smooth intensity values with a savgol_filter."""
     return savgol_filter(intensity, window_length, poly_filter)
 
 
-def equation_to_fit(k_2_conc_a: float, k_ph: float, k_3: float, k_4: float,
+def equation_to_fit(k_tet: float, k_3s: float, k_3_a: float, k_tta: float,
                     times: np.ndarray, intensity: np.ndarray) -> float:
     """Form of the equation to fit using RK."""
-    return k_2_conc_a*np.exp(-k_ph*times)-k_3*intensity-2*k_4*(intensity**2)
+    return k_tet*np.exp((-k_3s)*times)-k_3_a*intensity-2*k_tta*(intensity**2)
+
+def equation_to_fit_2(capital_k: float, k_tet: float, k_3s: float,
+                      k_3_a: float, k_tta: float, times: np.ndarray,
+                      intensity: np.ndarray) -> float:
+    """Form of the equation to fit using RK."""
+    return capital_k*k_tet*np.exp((-k_3s-k_tet)*times)-k_3_a*intensity-2*k_tta*(intensity**2)
 
 
 def runge_kutta(diff_equation: Callable,
-                k_2_conc_a: float, k_ph: float, k_3: float, k_4: float,
+                k_tet: float, k_3s: float, k_3_a: float, k_tta: float,
                 time_0: float, intensity_0: float,
                 times: np.ndarray) -> np.ndarray:
     """Do RK."""
-    step = times[1]-times[0]
+    time_step = times[1]-times[0]
     intensity = np.zeros(len(times))
     intensity[0] = intensity_0
-    times[0] = time_0
 
-    params = [k_2_conc_a,k_ph,k_3,k_4]
+    k1 = time_step*diff_equation(
+     k_tet,k_3s,k_3_a,k_tta,time_0,intensity_0)
+    k2 = time_step*diff_equation(
+     k_tet,k_3s,k_3_a,k_tta,time_0+1/2*time_step,intensity_0+1/2*k1)
+    k3 = time_step*diff_equation(
+     k_tet,k_3s,k_3_a,k_tta,time_0+1/2*time_step,intensity_0+1/2*k2)
+    k4 = time_step*diff_equation(
+     k_tet,k_3s,k_3_a,k_tta,time_0+time_step,intensity_0+k3)
 
-    for i in range(len(times)-1):
-        time = times[i]
-        intens = intensity[i]
-        k1 = step*diff_equation(*params, time, intens)
-        k2 = step*diff_equation(*params, time+1/2*step, intens+1/2*k1)
-        k3 = step*diff_equation(*params, time+1/2*step, intens+1/2*k2)
-        k4 = step*diff_equation(*params, time+step, intens+k3)
+    intensity[1] = intensity[0] + k1/6 + k2/3 + k3/3 + k4/6
 
-        intensity[i+1] = intens + k1/6 + k2/3 + k4/6
+    for i in range(2,len(times)-1):
+        k1 = time_step*diff_equation(
+             k_tet,k_3s,k_3_a,k_tta,
+             times[i-1],intensity[i-1])
+        k2 = time_step*diff_equation(
+             k_tet,k_3s,k_3_a,k_tta,
+             times[i-1]+1/2*time_step,intensity[i-1]+1/2*k1)
+        k3 = time_step*diff_equation(
+             k_tet,k_3s,k_3_a,k_tta,
+             times[i-1]+1/2*time_step,intensity[i-1]+1/2*k2)
+        k4 = time_step*diff_equation(
+             k_tet,k_3s,k_3_a,k_tta,
+             times[i-1]+time_step,intensity[i-1]+k3)
+
+        intensity[i] = intensity[i-1] + k1/6 + k2/3 +k3/3 + k4/6
 
     return intensity
 
+def runge_kutta_2(diff_equation: Callable,
+                capital_k:float, k_tet: float, k_3s: float,
+                k_3_a: float, k_tta: float,
+                time_0: float, intensity_0: float,
+                times: np.ndarray) -> np.ndarray:
+    """Do RK."""
+    time_step = times[1]-times[0]
+    intensity = np.zeros(len(times))
+    intensity[0] = intensity_0
 
-def triplet_decay_solution(epsilon: float=1,
-                           time_0: float=0,
-                           intensity_0: float=0) -> np.ndarray:
+    k1 = time_step*diff_equation(
+          capital_k,k_tet,k_3s,k_3_a,k_tta,
+          time_0,intensity_0)
+    k2 = time_step*diff_equation(
+          capital_k,k_tet,k_3s,k_3_a,k_tta,
+          time_0+1/2*time_step,intensity_0+1/2*k1)
+    k3 = time_step*diff_equation(
+          capital_k,k_tet,k_3s,k_3_a,k_tta,
+          time_0+1/2*time_step,intensity_0+1/2*k2)
+    k4 = time_step*diff_equation(
+          capital_k,k_tet,k_3s,k_3_a,k_tta,
+          time_0+time_step,intensity_0+k3)
+
+    intensity[1] = intensity[0] + k1/6 + k2/3 + k3/3 + k4/6
+
+    for i in range(2,len(times)-1):
+        k1 = time_step*diff_equation(
+             capital_k,k_tet,k_3s,k_3_a,k_tta,
+             times[i-1],intensity[i-1])
+        k2 = time_step*diff_equation(
+             capital_k,k_tet,k_3s,k_3_a,k_tta,
+             times[i-1]+1/2*time_step,intensity[i-1]+1/2*k1)
+        k3 = time_step*diff_equation(
+             capital_k,k_tet,k_3s,k_3_a,k_tta,
+             times[i-1]+1/2*time_step,intensity[i-1]+1/2*k2)
+        k4 = time_step*diff_equation(
+             capital_k,k_tet,k_3s,k_3_a,k_tta,
+             times[i-1]+time_step,intensity[i-1]+k3)
+
+        intensity[i] = intensity[i-1] + k1/6 + k2/3 +k3/3 + k4/6
+
+    return intensity
+
+def triplet_decay_solution(times: np.ndarray,
+                           k_tet: float, k_3s: float,
+                           k_3_a: float, k_tta: float) -> np.ndarray:
     """Solve for the solution to the triplet decay, using RK."""
-    def to_return(times: np.ndarray,
-                  *params: list[float]):
-        """Helper function so curve_fit can have a 4-parameter function."""
-        return epsilon*(
-            runge_kutta(equation_to_fit, *params,
-                        time_0, intensity_0, times))**2
-    return to_return
+    time_0 = 0
+    intensity_0 = 0
+    epsilon = 1
+
+    return epsilon*(
+        runge_kutta(equation_to_fit,
+                    k_tet,k_3s,k_3_a,k_tta,time_0,intensity_0,times))**2
+
+def triplet_decay_solution_2(times: np.ndarray,
+                             capital_k: float, k_tet: float, k_3s: float,
+                             k_3_a: float, k_tta: float) -> np.ndarray:
+    """Solve for the solution to the triplet decay, using RK."""
+    time_0 = 0
+    intensity_0 = 0
+    epsilon = 1
+
+    return epsilon*(
+        runge_kutta_2(equation_to_fit_2,
+                      capital_k,k_tet,k_3s,k_3_a,k_tta,
+                      time_0,intensity_0,times))**2

@@ -62,8 +62,6 @@ if explain:
 
         """)
 
-epsilon = st.number_input("epsilon", value=10.0, format="%f", step=1.0)
-
 # toggle for different modes
 mode = st.radio("Mode:",
                 ["Parameter Estimation", "Curve Plotter"])
@@ -158,18 +156,14 @@ if mode == "Parameter Estimation":
             k_2_conc_a, k_ph, k_3, k_4 = find_best_fit_params(
                 times, intensities,
                 initial_guesses=[1, 1, 1, 1])
-
+            print(k_2_conc_a, k_ph, k_3, k_4)
             st.write("## Best-Fit Parameters")
             st.text(f"k_2[A]: {k_2_conc_a}")
             st.text(f"k_ph:   {k_ph}")
             st.text(f"k_3:    {k_3}")
             st.text(f"k_4:    {k_4}")
 
-            best_fit_intensities = triplet_decay_solution(epsilon)(
-                times, k_2_conc_a, k_ph, k_3, k_4)
-
-            # normalize fit to data
-            best_fit_intensities *= max(intensities)/max(best_fit_intensities)
+            best_fit_intensities = triplet_decay_solution(times, k_2_conc_a, k_ph, k_3, k_4)
 
             st.write("#### Did it work? Best-fit parameter curve:")
             fig = plt.figure(figsize=(5,5))
@@ -181,31 +175,21 @@ if mode == "Parameter Estimation":
             fig.tight_layout()
             st.pyplot(fig=fig)
 
-            st.write("Data from plot above (click to download):")
-            display_dataframe = pd.DataFrame({
-                "Time": times,
-                "Given Intensity": intensities,
-                "Best-Fit Intensity": best_fit_intensities
-            })
-            st.write(display_dataframe)
-
-
 
 else:
     col1, col2 = st.columns([1, 3])
 
     with col1:
-        k_2_conc_a = st.number_input("Enter k_2[A]: ", value=10.0)
-        k_3 = st.number_input("Enter k_3: ", value=10.0)
-        k_4 = st.number_input("Enter k_4: ", value=30.0)
-        k_ph = st.number_input("Enter k_ph: ", value=10.0)
-        t_min = st.number_input("Enter t_min: ", value=0.0)
-        t_max = st.number_input("Enter t_max: ", value=1.0)
+        k_2_conc_a = float(st.text_input("Enter k_2[A]: ", value=10))
+        k_3 = float(st.text_input("Enter k_3: ", value=10))
+        k_4 = float(st.text_input("Enter k_4: ", value=30))
+        k_ph = float(st.text_input("Enter k_ph: ", value=10))
+        t_min = float(st.text_input("Enter t_min: ", value=0))
+        t_max = float(st.text_input("Enter t_max: ", value=1))
 
     with col2:
         times = np.linspace(t_min, t_max, 1000)
-        intensities = triplet_decay_solution(epsilon)(
-            times, k_2_conc_a, k_ph, k_3, k_4)
+        intensities = triplet_decay_solution(times, k_2_conc_a, k_ph, k_3, k_4)
 
         fig = plt.figure(figsize=(5,5))
         ax = fig.gca()
